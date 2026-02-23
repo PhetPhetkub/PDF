@@ -7,7 +7,7 @@ import uuid
 
 app = FastAPI()
 
-# 1. ระบบจัดการความปลอดภัย (CORS) - แก้ปัญหาที่หน้าเว็บฟ้อง Error สีส้ม
+# 1. ส่วนควบคุมความปลอดภัย (CORS) - อนุญาตให้หน้าเว็บในคอมส่งไฟล์มาได้
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,30 +16,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. ฟังก์ชันหลักสำหรับแปลงไฟล์ PDF เป็น Word
+# 2. ฟังก์ชันสำหรับรับไฟล์ PDF และสั่งแปลงเป็น Word
 @app.post("/convert")
-async function convert_pdf_to_docx(file: UploadFile = File(...)):
+async def convert_pdf_to_docx(file: UploadFile = File(...)):
     # ตรวจสอบว่าเป็นไฟล์ PDF หรือไม่
     if not file.filename.endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="ขอเป็นไฟล์ PDF เท่านั้นครับ")
+        raise HTTPException(status_code=400, detail="กรุณาอัปโหลดไฟล์ PDF เท่านั้น")
 
-    # สร้างชื่อไฟล์สุ่มเพื่อไม่ให้ชื่อซ้ำกัน
+    # สร้างชื่อไฟล์แบบสุ่มเพื่อป้องกันไฟล์ซ้ำ
     file_id = str(uuid.uuid4())
     pdf_path = f"{file_id}.pdf"
     docx_path = f"{file_id}.docx"
 
     try:
-        # บันทึกไฟล์ PDF ที่รับมาลงเครื่องชั่วคราว
+        # บันทึกไฟล์ PDF ลงในเครื่องชั่วคราว
         with open(pdf_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
 
-        # เริ่มต้นการแปลงไฟล์ด้วย pdf2docx
+        # สั่งแปลงไฟล์ PDF เป็น Word
         cv = Converter(pdf_path)
         cv.convert(docx_path)
         cv.close()
 
-        # ส่งไฟล์ Word กลับไปให้ผู้ใช้ดาวน์โหลด
+        # ส่งไฟล์ Word กลับไปให้หน้าเว็บดาวน์โหลด
         return FileResponse(
             path=docx_path, 
             filename=file.filename.replace(".pdf", ".docx"),
@@ -47,7 +47,10 @@ async function convert_pdf_to_docx(file: UploadFile = File(...)):
         )
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"เกิดข้อผิดพลาด: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
-    # หมายเหตุ: ในระบบฟรี ไฟล์ชั่วคราวจะถูกลบเมื่อมีการเริ่ม Deploy ใหม่
+    finally:
+        # ลบไฟล์ PDF ต้นฉบับทิ้งหลังใช้งานเสร็จ (เพื่อประหยัดพื้นที่)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
