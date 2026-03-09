@@ -1,90 +1,75 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ฟรี PDF to Word & แปลภาษา</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>ฟรี PDF to Word</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-5">
-    <div class="max-w-xl w-full bg-slate-800 p-10 rounded-3xl shadow-2xl border border-slate-700">
-        <h1 class="text-3xl font-bold text-center mb-6">เครื่องมือจัดการ PDF 📄✨</h1>
-        
-        <div class="mb-8 text-left">
-            <label for="action-type" class="block text-sm font-medium text-slate-300 mb-2">📌 เลือกโหมดการทำงาน:</label>
-            <select id="action-type" class="w-full bg-slate-700 border border-slate-600 text-white text-md rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none transition-all cursor-pointer">
-                <option value="convert">📄 แปลงเป็น Word ปกติ (รักษาหน้ากระดาษ)</option>
-                <option value="translate">แปลเป็นภาษาไทย (เอาเฉพาะตัวหนังสือ)</option>
-            </select>
-        </div>
-        
-        <div id="drop-zone" class="border-2 border-dashed border-slate-500 rounded-2xl p-12 text-center hover:border-blue-500 transition-all cursor-pointer bg-slate-700/50">
-            <p class="text-lg">ลากไฟล์ PDF มาวางที่นี่</p>
-            <p class="text-sm text-slate-400 mt-2">หรือคลิกเพื่อเลือกไฟล์</p>
-            <input type="file" id="file-input" class="hidden" accept=".pdf">
-        </div>
+    <div class="max-w-xl w-full bg-slate-800 p-10 rounded-3xl shadow-2xl border border-slate-700">
+        <h1 class="text-3xl font-bold text-center mb-8">แปลง PDF เป็น Word 📄➡️📝</h1>
+        
+        <div id="drop-zone" class="border-2 border-dashed border-slate-500 rounded-2xl p-12 text-center hover:border-blue-500 transition-all cursor-pointer bg-slate-700/50">
+            <p class="text-lg">ลากไฟล์ PDF มาวางที่นี่</p>
+            <p class="text-sm text-slate-400 mt-2">หรือคลิกเพื่อเลือกไฟล์</p>
+            <input type="file" id="file-input" class="hidden" accept=".pdf">
+        </div>
 
-        <div id="loader" class="hidden mt-8 text-center">
-            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
-            <p class="mt-4 text-blue-400">กำลังประมวลผล... (ถ้าแปลภาษาอาจใช้เวลา 1-3 นาที)</p>
-        </div>
+        <div id="loader" class="hidden mt-8 text-center">
+            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
+            <p class="mt-4 text-blue-400">กำลังแปลงไฟล์... (อาจใช้เวลา 1-2 นาทีถ้าไฟล์ใหญ่)</p>
+        </div>
 
-        <div id="result" class="hidden mt-8 text-center">
-            <a id="download-link" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full transition-all cursor-pointer inline-block">
-                📥 ดาวน์โหลดไฟล์ Word
-            </a>
-        </div>
-    </div>
+        <div id="result" class="hidden mt-8 text-center">
+            <a id="download-link" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full transition-all">
+                📥 ดาวน์โหลดไฟล์ Word
+            </a>
+        </div>
+    </div>
 
-    <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const loader = document.getElementById('loader');
-        const result = document.getElementById('result');
-        const downloadLink = document.getElementById('download-link');
-        const actionType = document.getElementById('action-type');
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const loader = document.getElementById('loader');
+        const result = document.getElementById('result');
+        const downloadLink = document.getElementById('download-link');
 
-        // อัปเดต URL ให้ตรงกับหลังบ้านใหม่ (เปลี่ยนจาก /convert เป็น /upload)
-        const API_URL = "https://pdf-x141.onrender.com/upload";
+        // ลิงก์นี้ถูกต้องและพร้อมทำงานแล้วครับ!
+        const API_URL = "https://pdf-x141.onrender.com/convert";
 
-        dropZone.onclick = () => fileInput.click();
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('bg-slate-600'); };
-        dropZone.ondragleave = () => dropZone.classList.remove('bg-slate-600');
-        dropZone.ondrop = (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); };
-        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+        dropZone.onclick = () => fileInput.click();
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('bg-slate-600'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('bg-slate-600');
+        dropZone.ondrop = (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); };
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
 
-        async function handleFile(file) {
-            if (!file || file.type !== 'application/pdf') return alert('ขอเป็นไฟล์ PDF นะครับ');
-            
-            loader.classList.remove('hidden');
-            result.classList.add('hidden');
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            // ส่งคำสั่งว่าลูกค้าเลือกเมนูไหน ไปให้หลังบ้าน
-            formData.append('action', actionType.value);
+        async function handleFile(file) {
+            if (!file || file.type !== 'application/pdf') return alert('ขอเป็นไฟล์ PDF นะครับ');
+            
+            loader.classList.remove('hidden');
+            result.classList.add('hidden');
+            
+            const formData = new FormData();
+            formData.append('file', file);
 
-            try {
-                const response = await fetch(API_URL, { method: 'POST', body: formData });
-                
-                if (!response.ok) throw new Error('Network response was not ok');
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: formData });
+                
+                // เช็กนิดนึงว่า Server ตอบกลับมาว่าพังหรือเปล่า
+                if (!response.ok) throw new Error('Network response was not ok');
 
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                
-                downloadLink.href = url;
-                // ตั้งชื่อไฟล์ให้ตรงกับโหมดที่เลือก
-                downloadLink.download = actionType.value === 'translate' 
-                    ? file.name.replace(".pdf", "_Translated_TH.docx") 
-                    : file.name.replace(".pdf", "_Converted.docx");
-                
-                result.classList.remove('hidden');
-            } catch (error) {
-                alert('เซิร์ฟเวอร์กำลังตื่น หรือ เกิดข้อผิดพลาดครับ รอสัก 1 นาทีแล้วลองใหม่นะ');
-                console.error('Error:', error);
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-    </script>
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                downloadLink.href = url;
+                downloadLink.download = file.name.replace(".pdf", ".docx");
+                result.classList.remove('hidden');
+            } catch (error) {
+                alert('เกิดข้อผิดพลาด ลองตรวจสอบว่า Server หลังบ้านทำงานปกติหรือไม่ครับ');
+                console.error('Error:', error); // เอาไว้ดู error ใน console ได้
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+    </script>
 </body>
 </html>
-
